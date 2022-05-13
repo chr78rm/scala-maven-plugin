@@ -4,6 +4,9 @@
  */
 package scala_maven_dependency;
 
+import de.christofreichardt.diagnosis.AbstractTracer;
+import de.christofreichardt.diagnosis.TracerFactory;
+import java.util.Collections;
 import java.util.Set;
 import org.apache.maven.artifact.Artifact;
 import scala_maven.MavenArtifactResolver;
@@ -38,7 +41,41 @@ public class Context4ScalaRemote extends ContextBase implements Context {
 
   @Override
   public Set<Artifact> findCompilerAndDependencies() throws Exception {
-    return mavenArtifactResolver.getJarAndDependencies(
-        scalaOrganization, aids.scalaCompilerArtifactId(), scalaVersion.toString(), null);
+    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
+    tracer.entry("Set<Artifact>", this, "findCompilerAndDependencies()");
+    try {
+      tracer.out().printfIndentln("scalaOrganization = %s", scalaOrganization);
+      tracer
+          .out()
+          .printfIndentln("aids.scalaCompilerArtifactId() = %s", aids.scalaCompilerArtifactId());
+      tracer.out().printfIndentln("scalaVersion = %s", scalaVersion);
+
+      Set<Artifact> compilerAndDependencies =
+          mavenArtifactResolver.getJarAndDependencies(
+              scalaOrganization, aids.scalaCompilerArtifactId(), scalaVersion.toString(), null);
+
+      tracer.out().printfIndentln("compilerAndDependencies = %s", compilerAndDependencies);
+
+      return compilerAndDependencies;
+    } finally {
+      tracer.wayout();
+    }
+  }
+
+  @Override
+  public Set<Artifact> findScalaDocAndDependencies() throws Exception {
+    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
+    tracer.entry("Set<Artifact>", this, "findScalaDocAndDependencies()");
+    try {
+      tracer.out().printfIndentln("scalaOrganization = %s", scalaOrganization);
+      tracer
+          .out()
+          .printfIndentln("aids.scalaCompilerArtifactId() = %s", aids.scalaCompilerArtifactId());
+      tracer.out().printfIndentln("scalaVersion = %s", scalaVersion);
+
+      return Collections.emptySet();
+    } finally {
+      tracer.wayout();
+    }
   }
 }

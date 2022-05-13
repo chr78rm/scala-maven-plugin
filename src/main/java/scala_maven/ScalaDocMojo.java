@@ -4,6 +4,8 @@
  */
 package scala_maven;
 
+import de.christofreichardt.diagnosis.AbstractTracer;
+import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
 import java.util.*;
 import org.apache.maven.plugins.annotations.Execute;
@@ -150,61 +152,79 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
   }
 
   protected JavaMainCaller getScalaCommand() throws Exception {
-    // This ensures we have a valid scala version...
-    checkScalaVersion();
-    Context sc = findScalaContext();
-    JavaMainCaller jcmd = getEmptyScalaCommand(sc.apidocMainClassName(scaladocClassName));
-    jcmd.addArgs(args);
-    jcmd.addJvmArgs(jvmArgs);
-    addCompilerPluginOptions(jcmd);
+    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
+    tracer.entry("JavaMainCaller", this, "getScalaCommand()");
+    try {
+      tracer.out().printfIndentln("scaladocClassName = %s", scaladocClassName);
+      tracer.out().printfIndentln("args = %s", Arrays.toString(args));
+      tracer.out().printfIndentln("jvmArgs = %s", Arrays.toString(jvmArgs));
 
-    // copy the classpathElements to not modify the global project definition see
-    // https://github.com/davidB/maven-scala-plugin/issues/60
-    Set<File> paths = new TreeSet<>();
-    for (String s : project.getCompileClasspathElements()) {
-      paths.add(new File(s));
-    }
-    paths.remove(
-        new File(
-            project
-                .getBuild()
-                .getOutputDirectory())); // remove output to avoid "error for" : error: XXX is
-    // already defined as package XXX ... object XXX {
-    addAdditionalDependencies(paths);
+      // This ensures we have a valid scala version...
+      checkScalaVersion();
+      Context sc = findScalaContext();
+      String apidocMainClassName = sc.apidocMainClassName(scaladocClassName);
+      tracer.out().printfIndentln("apidocMainClassName = %s", apidocMainClassName);
+      JavaMainCaller jcmd = getEmptyScalaCommand(apidocMainClassName);
+      jcmd.addArgs(args);
+      jcmd.addJvmArgs(jvmArgs);
+      addCompilerPluginOptions(jcmd);
+
+      // copy the classpathElements to not modify the global project definition see
+      // https://github.com/davidB/maven-scala-plugin/issues/60
+      Set<File> paths = new TreeSet<>();
+      for (String s : project.getCompileClasspathElements()) {
+        paths.add(new File(s));
+      }
+      paths.remove(
+          new File(
+              project
+                  .getBuild()
+                  .getOutputDirectory())); // remove output to avoid "error for" : error: XXX is
+      // already defined as package XXX ... object XXX {
+      addAdditionalDependencies(paths);
     if (!paths.isEmpty()) jcmd.addOption("-classpath", FileUtils.toMultiPath(paths));
-    // jcmd.addOption("-sourcepath", sourceDir.getAbsolutePath());
+      // jcmd.addOption("-sourcepath", sourceDir.getAbsolutePath());
 
-    jcmd.addArgs("-doc-format:html");
-    jcmd.addOption("-doc-title", doctitle);
-    return jcmd;
+      jcmd.addArgs("-doc-format:html");
+      jcmd.addOption("-doc-title", doctitle);
+      return jcmd;
+    } finally {
+      tracer.wayout();
+    }
   }
 
   @Override
   public void generate(Sink sink, Locale locale) throws MavenReportException {
+    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
+    tracer.entry("void", this, "void generate(Sink sink, Locale locale)");
     try {
-      if (!canGenerateReport()) {
-        getLog().info("No source files found");
-        return;
-      }
-
-      File reportOutputDir = getReportOutputDirectory();
-      if (!reportOutputDir.exists()) {
-        reportOutputDir.mkdirs();
-      }
-
-      List<File> sources = findSourceFiles();
-      if (sources.size() > 0) {
-        JavaMainCaller jcmd = getScalaCommand();
-        jcmd.addOption("-d", reportOutputDir.getAbsolutePath());
-        for (File x : sources) {
-          jcmd.addArgs(FileUtils.pathOf(x, useCanonicalPath));
+      try {
+        if (!canGenerateReport()) {
+          getLog().info("No source files found");
+          return;
         }
-        jcmd.run(displayCmd);
+
+        File reportOutputDir = getReportOutputDirectory();
+        if (!reportOutputDir.exists()) {
+          reportOutputDir.mkdirs();
+        }
+
+        List<File> sources = findSourceFiles();
+        if (sources.size() > 0) {
+          JavaMainCaller jcmd = getScalaCommand();
+          jcmd.addOption("-d", reportOutputDir.getAbsolutePath());
+          for (File x : sources) {
+            jcmd.addArgs(FileUtils.pathOf(x, useCanonicalPath));
+          }
+          jcmd.run(displayCmd);
+        }
+      } catch (MavenReportException | RuntimeException exc) {
+        throw exc;
+      } catch (Exception exc) {
+        throw new MavenReportException("wrap: " + exc.getMessage(), exc);
       }
-    } catch (MavenReportException | RuntimeException exc) {
-      throw exc;
-    } catch (Exception exc) {
-      throw new MavenReportException("wrap: " + exc.getMessage(), exc);
+    } finally {
+      tracer.wayout();
     }
   }
 }
