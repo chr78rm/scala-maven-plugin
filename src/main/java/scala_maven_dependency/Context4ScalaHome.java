@@ -4,6 +4,8 @@
  */
 package scala_maven_dependency;
 
+import de.christofreichardt.diagnosis.AbstractTracer;
+import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
@@ -50,17 +52,23 @@ public class Context4ScalaHome extends ContextBase implements Context {
 
   @Override
   public Set<Artifact> findCompilerAndDependencies() throws Exception {
-    //        String compiler = aids.scalaCompilerArtifactId();
-    Set<Artifact> d = new TreeSet<>();
-    for (File f : new File(scalaHome, "lib").listFiles()) {
-      String name = f.getName();
-      if (name.endsWith(".jar")) {
-        d.add(
-            new LocalFileArtifact(
-                "local", name.substring(0, name.length() - 4), scalaVersion.toString(), f));
+    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
+    tracer.entry("Set<Artifact>", this, "findCompilerAndDependencies()");
+    try {
+      //        String compiler = aids.scalaCompilerArtifactId();
+      Set<Artifact> d = new TreeSet<>();
+      for (File f : new File(scalaHome, "lib").listFiles()) {
+        String name = f.getName();
+        if (name.endsWith(".jar")) {
+          d.add(
+              new LocalFileArtifact(
+                  "local", name.substring(0, name.length() - 4), scalaVersion.toString(), f));
+        }
       }
+      return d;
+    } finally {
+      tracer.wayout();
     }
-    return d;
   }
 
   @Override

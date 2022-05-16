@@ -68,12 +68,19 @@ public class Context4ScalaRemote extends ContextBase implements Context {
     tracer.entry("Set<Artifact>", this, "findScalaDocAndDependencies()");
     try {
       tracer.out().printfIndentln("scalaOrganization = %s", scalaOrganization);
-      tracer
-          .out()
-          .printfIndentln("aids.scalaCompilerArtifactId() = %s", aids.scalaCompilerArtifactId());
+      tracer.out().printfIndentln("aids.scalaCompilerArtifactId() = %s", aids.scalaDocArtifactId());
       tracer.out().printfIndentln("scalaVersion = %s", scalaVersion);
 
-      return Collections.emptySet();
+      Set<Artifact> scaladocAndDependencies = Collections.emptySet();
+      if (aids.scalaDocArtifactId() != null) {
+        scaladocAndDependencies =
+            mavenArtifactResolver.getJarAndDependencies(
+                scalaOrganization, aids.scalaDocArtifactId(), scalaVersion.toString(), null);
+      }
+
+      tracer.out().printfIndentln("scaladocAndDependencies = %s", scaladocAndDependencies);
+
+      return scaladocAndDependencies;
     } finally {
       tracer.wayout();
     }

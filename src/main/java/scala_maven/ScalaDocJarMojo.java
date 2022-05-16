@@ -107,6 +107,10 @@ public class ScalaDocJarMojo extends ScalaDocMojo {
     tracer.initCurrentTracingContext(10, true);
     try {
       tracer.entry("void", this, "doExecute()");
+      System.getenv().keySet().stream()
+          .sorted()
+          .forEach(key -> tracer.out().printfIndentln("%s = %s", key, System.getenv(key)));
+      tracer.out().printfIndentln("---");
       List<String> propertyNames = new ArrayList<>(System.getProperties().stringPropertyNames());
       propertyNames.stream()
           .sorted()
@@ -124,6 +128,9 @@ public class ScalaDocJarMojo extends ScalaDocMojo {
         }
         try {
           generate(null, Locale.getDefault());
+
+          tracer.out().printfIndentln("Generating survived ...");
+
           if (reportOutputDirectory.exists()) {
             final File outputFile =
                 generateArchive(reportOutputDirectory, finalName + "-" + getClassifier() + ".jar");

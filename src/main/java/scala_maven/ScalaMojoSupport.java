@@ -233,7 +233,9 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
         VersionNumber scalaVersion = findScalaVersion();
 
         ArtifactIds aids =
-          scalaVersion.major == 3 ? new ArtifactIds4Scala3(scalaVersion) : new ArtifactIds4Scala2();
+            scalaVersion.major == 3
+                ? new ArtifactIds4Scala3(scalaVersion)
+                : new ArtifactIds4Scala2();
         VersionNumber requiredScalaVersion =
             StringUtils.isNotEmpty(scalaCompatVersion)
                 ? new VersionNumberMask(scalaCompatVersion)
@@ -251,7 +253,8 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
         }
         scalaContext =
             StringUtils.isNotEmpty(scalaHome)
-              ? new Context4ScalaHome(scalaVersion, requiredScalaVersion, aids, new File(scalaHome))
+                ? new Context4ScalaHome(
+                    scalaVersion, requiredScalaVersion, aids, new File(scalaHome))
                 : new Context4ScalaRemote(
                     scalaVersion,
                     requiredScalaVersion,
@@ -525,7 +528,9 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
     }
   }
 
-  /** @return A filter to only extract artifacts deployed from scala distributions */
+  /**
+   * @return A filter to only extract artifacts deployed from scala distributions
+   */
   private DependencyNodeFilter createScalaDistroDependencyFilter() throws Exception {
     List<DependencyNodeFilter> filters = new ArrayList<>();
     filters.add(new ScalaDistroArtifactFilter(findScalaContext()));
@@ -599,6 +604,7 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
       // TODO - Fork or not depending on configuration?
       JavaMainCaller cmd;
       String toolcp = getToolClasspath();
+      tracer.out().printfIndentln("toolcp = %s", toolcp);
       if (forkOverride) {
         // HACK (better may need refactor)
         boolean bootcp = true;
@@ -609,7 +615,8 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
         }
         String cp = bootcp ? "" : toolcp;
         bootcp =
-          bootcp && !(StringUtils.isNotEmpty(addScalacArgs) && addScalacArgs.contains("-nobootcp"));
+            bootcp
+                && !(StringUtils.isNotEmpty(addScalacArgs) && addScalacArgs.contains("-nobootcp"));
         // scalac with args in files
         // * works only since 2.8.0
         // * is buggy (don't manage space in path on windows)
@@ -753,8 +760,16 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
    * @throws Exception
    */
   protected void addCompilerPluginOptions(JavaMainCaller scalac) throws Exception {
-    for (String option : getCompilerPluginOptions()) {
-      scalac.addArgs(option);
+    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
+    tracer.entry("void", this, "addCompilerPluginOptions(JavaMainCaller scalac)");
+    try {
+      List<String> compilerPluginOptions = getCompilerPluginOptions();
+      tracer.out().printfIndentln("compilerPluginOptions = %s", compilerPluginOptions);
+      for (String option : compilerPluginOptions) {
+        scalac.addArgs(option);
+      }
+    } finally {
+      tracer.wayout();
     }
   }
 
