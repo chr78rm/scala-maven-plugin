@@ -7,6 +7,7 @@ package scala_maven;
 import de.christofreichardt.diagnosis.AbstractTracer;
 import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.maven.plugins.annotations.Execute;
@@ -190,10 +191,17 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
                   .getOutputDirectory())); // remove output to avoid "error for" : error: XXX is
       // already defined as package XXX ... object XXX {
       addAdditionalDependencies(paths);
+      if (sc.version().major == 3) {
+        addScalaDocToClasspath(paths);
+        String outputDirectory = project.getModel().getBuild().getOutputDirectory();
+        tracer.out().printfIndentln("outputDirectory = %s", outputDirectory);
+      }
 
       tracer.out().printfIndentln("classpath = %s", paths);
 
-      if (!paths.isEmpty()) jcmd.addOption("-classpath", FileUtils.toMultiPath(paths));
+      if (!paths.isEmpty()) {
+        jcmd.addOption("-classpath", FileUtils.toMultiPath(paths));
+      }
       // jcmd.addOption("-sourcepath", sourceDir.getAbsolutePath());
 
       jcmd.addArgs("-doc-format:html");
@@ -236,8 +244,19 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
           tracer.out().printfIndentln("jcmd.getClass().getName() = %s", jcmd.getClass().getName());
           tracer.out().flush();
           jcmd.addOption("-d", reportOutputDir.getAbsolutePath());
-          for (File x : sources) {
-            jcmd.addArgs(FileUtils.pathOf(x, useCanonicalPath));
+          if (this.scalaContext.version().major < 3) {
+            for (File x : sources) {
+              jcmd.addArgs(FileUtils.pathOf(x, useCanonicalPath));
+            }
+          } else {
+            File targetClassesDir = new File(project.getModel().getBuild().getOutputDirectory());
+            if (targetClassesDir.exists()) {
+              jcmd.addArgs(targetClassesDir.getAbsolutePath());
+            } else {
+              throw new FileNotFoundException(
+                  String.format(
+                      "Target directory '%s' doesn't exist.", targetClassesDir.getAbsolutePath()));
+            }
           }
           jcmd.run(displayCmd);
         }

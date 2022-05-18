@@ -221,7 +221,7 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
     return mavenArtifactResolver;
   }
 
-  private Context scalaContext;
+  protected Context scalaContext;
 
   public Context findScalaContext() throws Exception {
     AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();

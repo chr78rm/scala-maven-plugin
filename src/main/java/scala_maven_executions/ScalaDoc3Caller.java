@@ -10,7 +10,9 @@ import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Developer
@@ -18,6 +20,14 @@ import java.util.Arrays;
 public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
 
   String classPath;
+  final List<String> jvmArgs = new ArrayList<>();
+  final String apidocMainClassName = "dotty.tools.scaladoc.Main";
+  String outputPath =
+      FileSystems.getDefault()
+          .getPath(".", "target", "site", "scaladocs")
+          .toAbsolutePath()
+          .toString();
+  final List<String> args = new ArrayList<>();
 
   @Override
   public void addJvmArgs(String... jvmArgs) {
@@ -25,6 +35,7 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
     tracer.entry("void", this, "addJvmArgs(String... args)");
     try {
       tracer.out().printfIndentln("jvmArgs = %s", Arrays.toString(jvmArgs));
+      this.jvmArgs.addAll(Arrays.asList(jvmArgs));
     } finally {
       tracer.wayout();
     }
@@ -36,6 +47,11 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
     tracer.entry("void", this, "addArgs(String... args)");
     try {
       tracer.out().printfIndentln("args = %s", Arrays.toString(args));
+      if (args != null) {
+        for (String arg : args) {
+          this.args.add(arg);
+        }
+      }
     } finally {
       tracer.wayout();
     }
@@ -49,7 +65,8 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
       tracer.out().printfIndentln("%s = %s", key, value);
       if (key.equals("-classpath")) {
         this.classPath = value;
-        //        this.classPath = this.classPath.replace("\\", "/");
+      } else if (key.equals("-d")) {
+        this.outputPath = value;
       }
     } finally {
       tracer.wayout();
@@ -80,22 +97,26 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
     tracer.entry("boolean", this, "run(boolean displayCmd, boolean throwFailure)");
     try {
       tracer.out().printfIndentln("displayCmd = %b", displayCmd);
+      tracer.out().printfIndentln("this.jvmArgs = %s", this.jvmArgs);
+      tracer.out().printfIndentln("this.args = %s", this.args);
 
-      ProcessBuilder processBuilder =
-          new ProcessBuilder(
-              "java",
-              "-Djline.terminal=unix",
-              "-classpath",
-              String.format("\"%s\"", classPath),
-              "-Dscala.usejavacp=true",
-              "dotty.tools.scaladoc.Main",
-              "-d",
-              "./target/site/scaladocs",
-              "./target/classes/");
+      List<String> commands = new ArrayList<>();
+      commands.add("java");
+      commands.addAll(this.jvmArgs);
+      commands.add("-classpath");
+      commands.add(this.classPath);
+      commands.add("-Dscala.usejavacp=true");
+      commands.add(this.apidocMainClassName);
+      commands.add("-d");
+      commands.add(this.outputPath);
+      commands.add("./target/classes/");
+
+      tracer.out().printfIndentln("commands = %s", commands);
+
+      ProcessBuilder processBuilder = new ProcessBuilder(commands);
       Path userDir = FileSystems.getDefault().getPath(".");
       File workingDir = userDir.toFile();
       File logFile = userDir.resolve("scaladoc.log").toFile();
-      File errorFile = userDir.resolve("scaladoc-error.log").toFile();
       Process process =
           processBuilder
               .directory(workingDir)
