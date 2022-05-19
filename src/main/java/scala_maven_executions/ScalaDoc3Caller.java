@@ -12,7 +12,11 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import org.apache.maven.plugin.AbstractMojo;
 
 /**
  * @author Developer
@@ -21,13 +25,21 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
 
   String classPath;
   final List<String> jvmArgs = new ArrayList<>();
-  final String apidocMainClassName = "dotty.tools.scaladoc.Main";
+  final String apidocMainClassName;
+  final AbstractMojo requester;
   String outputPath =
       FileSystems.getDefault()
           .getPath(".", "target", "site", "scaladocs")
           .toAbsolutePath()
           .toString();
   final List<String> args = new ArrayList<>();
+  final String targetClassesDir;
+
+  public ScalaDoc3Caller(AbstractMojo mojo, String apidocMainClassName, String targetClassesDir) {
+    this.requester = mojo;
+    this.apidocMainClassName = apidocMainClassName;
+    this.targetClassesDir = targetClassesDir;
+  }
 
   @Override
   public void addJvmArgs(String... jvmArgs) {
@@ -47,9 +59,24 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
     tracer.entry("void", this, "addArgs(String... args)");
     try {
       tracer.out().printfIndentln("args = %s", Arrays.toString(args));
+
+      Map<String, String> compatMap = new HashMap<>();
+      compatMap.put("-doc-footer", "-project-footer");
+      compatMap.put("-doc-title", "-project");
+      compatMap.put("-doc-version", "-project-version");
+      String[] supportedOptions = {"-project-footer", "-project", "-project-version"};
+
       if (args != null) {
-        for (String arg : args) {
-          this.args.add(arg);
+        List<String> migratedArgs =
+            Arrays.stream(args)
+                .map(arg -> compatMap.containsKey(arg) ? compatMap.get(arg) : arg)
+                .collect(Collectors.toList());
+        if (Arrays.asList(supportedOptions).contains(migratedArgs.get(0))) {
+          this.args.addAll(migratedArgs);
+        } else {
+          this.requester
+              .getLog()
+              .warn(String.format("Unsupported option '%s' has been ignored.", args[0]));
         }
       }
     } finally {
@@ -76,19 +103,16 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
   @Override
   public void addOption(String key, File value) {
     throw new UnsupportedOperationException("Not supported yet."); // Generated from
-    // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
   }
 
   @Override
   public void addOption(String key, boolean value) {
     throw new UnsupportedOperationException("Not supported yet."); // Generated from
-    // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
   }
 
   @Override
   public void redirectToLog() {
     throw new UnsupportedOperationException("Not supported yet."); // Generated from
-    // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
   }
 
   @Override
@@ -107,9 +131,10 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
       commands.add(this.classPath);
       commands.add("-Dscala.usejavacp=true");
       commands.add(this.apidocMainClassName);
+      commands.addAll(this.args);
       commands.add("-d");
       commands.add(this.outputPath);
-      commands.add("./target/classes/");
+      commands.add(this.targetClassesDir);
 
       tracer.out().printfIndentln("commands = %s", commands);
 

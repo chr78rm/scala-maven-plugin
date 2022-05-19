@@ -7,7 +7,6 @@ package scala_maven;
 import de.christofreichardt.diagnosis.AbstractTracer;
 import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.apache.maven.plugins.annotations.Execute;
@@ -172,7 +171,9 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
       if (sc.version().major < 3) {
         jcmd = getEmptyScalaCommand(apidocMainClassName);
       } else {
-        jcmd = new ScalaDoc3Caller();
+        String targetClassesDir = project.getModel().getBuild().getOutputDirectory();
+        tracer.out().printfIndentln("targetClassesDir = %s", targetClassesDir);
+        jcmd = new ScalaDoc3Caller(this, apidocMainClassName, targetClassesDir);
       }
       jcmd.addArgs(args);
       jcmd.addJvmArgs(jvmArgs);
@@ -193,8 +194,6 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
       addAdditionalDependencies(paths);
       if (sc.version().major == 3) {
         addScalaDocToClasspath(paths);
-        String outputDirectory = project.getModel().getBuild().getOutputDirectory();
-        tracer.out().printfIndentln("outputDirectory = %s", outputDirectory);
       }
 
       tracer.out().printfIndentln("classpath = %s", paths);
@@ -247,15 +246,6 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
           if (this.scalaContext.version().major < 3) {
             for (File x : sources) {
               jcmd.addArgs(FileUtils.pathOf(x, useCanonicalPath));
-            }
-          } else {
-            File targetClassesDir = new File(project.getModel().getBuild().getOutputDirectory());
-            if (targetClassesDir.exists()) {
-              jcmd.addArgs(targetClassesDir.getAbsolutePath());
-            } else {
-              throw new FileNotFoundException(
-                  String.format(
-                      "Target directory '%s' doesn't exist.", targetClassesDir.getAbsolutePath()));
             }
           }
           jcmd.run(displayCmd);
