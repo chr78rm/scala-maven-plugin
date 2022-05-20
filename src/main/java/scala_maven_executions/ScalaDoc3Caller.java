@@ -8,6 +8,7 @@ import de.christofreichardt.diagnosis.AbstractTracer;
 import de.christofreichardt.diagnosis.Traceable;
 import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoFailureException;
 
 /**
  * @author Chr. Reichardt
@@ -117,10 +119,16 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
 
   @Override
   public void run(boolean displayCmd) throws Exception {
+    run(displayCmd, true);
+  }
+
+  @Override
+  public boolean run(boolean displayCmd, boolean throwFailure) throws MojoFailureException {
     AbstractTracer tracer = getCurrentTracer();
     tracer.entry("boolean", this, "run(boolean displayCmd, boolean throwFailure)");
     try {
       tracer.out().printfIndentln("displayCmd = %b", displayCmd);
+      tracer.out().printfIndentln("throwFailure = %b", throwFailure);
       tracer.out().printfIndentln("this.jvmArgs = %s", this.jvmArgs);
       tracer.out().printfIndentln("this.args = %s", this.args);
 
@@ -138,25 +146,39 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
 
       tracer.out().printfIndentln("commands = %s", commands);
 
+      if (displayCmd) {
+        String cmd = commands.stream().collect(Collectors.joining(" "));
+        this.requester.getLog().info(String.format("cmd: %s", cmd));
+      }
+
       ProcessBuilder processBuilder = new ProcessBuilder(commands);
       Path userDir = FileSystems.getDefault().getPath(".");
       File workingDir = userDir.toFile();
-      File logFile = userDir.resolve("scaladoc.log").toFile();
-      Process process =
-          processBuilder
-              .directory(workingDir)
-              .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-              .redirectError(ProcessBuilder.Redirect.INHERIT)
-              .start();
-      int exitValue = process.waitFor();
+      Process process;
+      try {
+        process =
+            processBuilder
+                .directory(workingDir)
+                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                .redirectError(ProcessBuilder.Redirect.INHERIT)
+                .start();
+      } catch (IOException ex) {
+        throw new MojoFailureException(ex.getMessage(), ex);
+      }
+      try {
+        int exitValue = process.waitFor();
+        if (exitValue != 0) {
+          throw new MojoFailureException(
+              String.format("scaladoc_3 returned non-zero value: %d", exitValue));
+        }
+      } catch (InterruptedException ex) {
+        throw new MojoFailureException(ex.getMessage(), ex);
+      }
+
+      return true;
     } finally {
       tracer.wayout();
     }
-  }
-
-  @Override
-  public boolean run(boolean displayCmd, boolean throwFailure) throws Exception {
-    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
