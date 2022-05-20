@@ -15,11 +15,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.maven.plugin.AbstractMojo;
 
 /**
- * @author Developer
+ * @author Chr. Reichardt
  */
 public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
 
@@ -47,7 +48,9 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
     tracer.entry("void", this, "addJvmArgs(String... args)");
     try {
       tracer.out().printfIndentln("jvmArgs = %s", Arrays.toString(jvmArgs));
-      this.jvmArgs.addAll(Arrays.asList(jvmArgs));
+      if (Objects.nonNull(jvmArgs)) {
+        this.jvmArgs.addAll(Arrays.asList(jvmArgs));
+      }
     } finally {
       tracer.wayout();
     }
@@ -64,20 +67,17 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
       compatMap.put("-doc-footer", "-project-footer");
       compatMap.put("-doc-title", "-project");
       compatMap.put("-doc-version", "-project-version");
-      String[] supportedOptions = {"-project-footer", "-project", "-project-version"};
+      compatMap.put("-doc-source-url", "-source-links");
 
-      if (args != null) {
+      if (Objects.nonNull(args)) {
+        if (Objects.equals(args[0], "-doc-format:html")) {
+          return;
+        }
         List<String> migratedArgs =
             Arrays.stream(args)
                 .map(arg -> compatMap.containsKey(arg) ? compatMap.get(arg) : arg)
                 .collect(Collectors.toList());
-        if (Arrays.asList(supportedOptions).contains(migratedArgs.get(0))) {
-          this.args.addAll(migratedArgs);
-        } else {
-          this.requester
-              .getLog()
-              .warn(String.format("Unsupported option '%s' has been ignored.", args[0]));
-        }
+        this.args.addAll(migratedArgs);
       }
     } finally {
       tracer.wayout();
@@ -102,17 +102,17 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
 
   @Override
   public void addOption(String key, File value) {
-    throw new UnsupportedOperationException("Not supported yet."); // Generated from
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
   public void addOption(String key, boolean value) {
-    throw new UnsupportedOperationException("Not supported yet."); // Generated from
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
   public void redirectToLog() {
-    throw new UnsupportedOperationException("Not supported yet."); // Generated from
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
@@ -145,8 +145,8 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
       Process process =
           processBuilder
               .directory(workingDir)
-              .redirectOutput(ProcessBuilder.Redirect.to(logFile))
-              .redirectError(ProcessBuilder.Redirect.to(logFile))
+              .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+              .redirectError(ProcessBuilder.Redirect.INHERIT)
               .start();
       int exitValue = process.waitFor();
     } finally {
@@ -156,34 +156,12 @@ public class ScalaDoc3Caller implements JavaMainCaller, Traceable {
 
   @Override
   public boolean run(boolean displayCmd, boolean throwFailure) throws Exception {
-    AbstractTracer tracer = getCurrentTracer();
-    tracer.entry("boolean", this, "run(boolean displayCmd, boolean throwFailure)");
-    try {
-      tracer.out().printfIndentln("displayCmd = %b", displayCmd);
-      tracer.out().printfIndentln("throwFailure = %b", throwFailure);
-
-      ProcessBuilder processBuilder =
-          new ProcessBuilder("scaladoc", "-d", "target/site/scaladocs", "src/main/scala");
-      Path userDir = FileSystems.getDefault().getPath(".");
-      File workingDir = userDir.toFile();
-      File logFile = userDir.resolve("scaladoc.log").toFile();
-      Process process =
-          processBuilder
-              .directory(workingDir)
-              .redirectOutput(ProcessBuilder.Redirect.appendTo(logFile))
-              .start();
-      int exitValue = process.waitFor();
-
-      return exitValue == 0;
-    } finally {
-      tracer.wayout();
-    }
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override
   public SpawnMonitor spawn(boolean displayCmd) throws Exception {
-    throw new UnsupportedOperationException("Not supported yet."); // Generated from
-    // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    throw new UnsupportedOperationException("Not supported yet.");
   }
 
   @Override

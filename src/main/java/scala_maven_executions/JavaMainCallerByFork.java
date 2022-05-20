@@ -61,6 +61,7 @@ public class JavaMainCallerByFork extends JavaMainCallerSupport {
     AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
     tracer.entry("boolean", this, "run(boolean displayCmd, boolean throwFailure)");
     try {
+      tracer.out().printfIndentln("_redirectToLog = %b", _redirectToLog);
       tracer.out().printfIndentln("this.mainClassName = %s", this.mainClassName);
       tracer.out().printfIndentln("this.jvmArgs = %s", this.jvmArgs);
       tracer.out().printfIndentln("this.args = %s", this.args);
