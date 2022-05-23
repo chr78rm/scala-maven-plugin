@@ -176,11 +176,6 @@
       <artifactId>plexus-classworlds</artifactId>
       <version>2.6.0</version>
     </dependency>
-    <dependency>
-      <groupId>de.christofreichardt</groupId>
-      <artifactId>tracelogger</artifactId>
-      <version>1.9.0</version>
-    </dependency>
 
     <!-- sbt incremental compiler -->
     <dependency>

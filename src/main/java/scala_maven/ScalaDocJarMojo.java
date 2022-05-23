@@ -4,11 +4,8 @@
  */
 package scala_maven;
 
-import de.christofreichardt.diagnosis.AbstractTracer;
-import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import org.apache.maven.archiver.MavenArchiveConfiguration;
@@ -99,64 +96,33 @@ public class ScalaDocJarMojo extends ScalaDocMojo {
 
   @Override
   public void doExecute() throws Exception {
-    TracerFactory.getInstance().reset();
-    TracerFactory.getInstance()
-        .readConfiguration(new File("." + File.separator + "tracerfactory-config.xml"));
-    TracerFactory.getInstance().openPoolTracer();
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.initCurrentTracingContext(10, true);
+    if (skip) {
+      getLog().info("Skipping javadoc generation");
+      return;
+    }
     try {
-      tracer.entry("void", this, "doExecute()");
-      System.getenv().keySet().stream()
-          .sorted()
-          .forEach(key -> tracer.out().printfIndentln("%s = %s", key, System.getenv(key)));
-      tracer.out().printfIndentln("---");
-      List<String> propertyNames = new ArrayList<>(System.getProperties().stringPropertyNames());
-      propertyNames.stream()
-          .sorted()
-          .forEach(
-              (propertyName) ->
-                  tracer
-                      .out()
-                      .printfIndentln(
-                          "%s = %s",
-                          propertyName, System.getProperties().getProperty(propertyName)));
-      try {
-        if (skip) {
-          getLog().info("Skipping javadoc generation");
-          return;
-        }
-        try {
-          generate(null, Locale.getDefault());
+      generate(null, Locale.getDefault());
 
-          tracer.out().printfIndentln("Generating survived ...");
-
-          if (reportOutputDirectory.exists()) {
-            final File outputFile =
-                generateArchive(reportOutputDirectory, finalName + "-" + getClassifier() + ".jar");
-            if (!attach) {
-              getLog().info("NOT adding javadoc to attached artifacts list.");
-            } else {
-              // TODO: these introduced dependencies on the project are going to become
-              // problematic - can we export it
-              // through metadata instead?
-              projectHelper.attachArtifact(project, "javadoc", getClassifier(), outputFile);
-            }
-          }
-        } catch (final ArchiverException e) {
-          failOnError("ArchiverException: Error while creating archive", e);
-        } catch (final IOException e) {
-          failOnError("IOException: Error while creating archive", e);
-        } catch (final MavenReportException e) {
-          failOnError("MavenReportException: Error while creating archive", e);
-        } catch (final RuntimeException e) {
-          failOnError("RuntimeException: Error while creating archive", e);
+      if (reportOutputDirectory.exists()) {
+        final File outputFile =
+            generateArchive(reportOutputDirectory, finalName + "-" + getClassifier() + ".jar");
+        if (!attach) {
+          getLog().info("NOT adding javadoc to attached artifacts list.");
+        } else {
+          // TODO: these introduced dependencies on the project are going to become
+          // problematic - can we export it
+          // through metadata instead?
+          projectHelper.attachArtifact(project, "javadoc", getClassifier(), outputFile);
         }
-      } finally {
-        tracer.wayout();
       }
-    } finally {
-      TracerFactory.getInstance().closePoolTracer();
+    } catch (final ArchiverException e) {
+      failOnError("ArchiverException: Error while creating archive", e);
+    } catch (final IOException e) {
+      failOnError("IOException: Error while creating archive", e);
+    } catch (final MavenReportException e) {
+      failOnError("MavenReportException: Error while creating archive", e);
+    } catch (final RuntimeException e) {
+      failOnError("RuntimeException: Error while creating archive", e);
     }
   }
 

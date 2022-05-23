@@ -4,11 +4,8 @@
  */
 package scala_maven;
 
-import de.christofreichardt.diagnosis.AbstractTracer;
-import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -154,109 +151,77 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
   }
 
   protected JavaMainCaller getScalaCommand() throws Exception {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry("JavaMainCaller", this, "getScalaCommand()");
-    try {
-      tracer.out().printfIndentln("scaladocClassName = %s", scaladocClassName);
-      tracer.out().printfIndentln("args = %s", Arrays.toString(args));
-      tracer.out().printfIndentln("jvmArgs = %s", Arrays.toString(jvmArgs));
-
-      // This ensures we have a valid scala version...
-      checkScalaVersion();
-      Context sc = findScalaContext();
-      String apidocMainClassName = sc.apidocMainClassName(scaladocClassName);
-      tracer.out().printfIndentln("apidocMainClassName = %s", apidocMainClassName);
-      tracer.out().printfIndentln("sc.version() = %s", sc.version());
-      JavaMainCaller jcmd;
-      if (sc.version().major < 3) {
-        jcmd = getEmptyScalaCommand(apidocMainClassName);
-      } else {
-        String targetClassesDir = project.getModel().getBuild().getOutputDirectory();
-        tracer.out().printfIndentln("targetClassesDir = %s", targetClassesDir);
-        jcmd = new ScalaDoc3Caller(this, apidocMainClassName, targetClassesDir);
-      }
-      jcmd.addArgs(args);
-      jcmd.addJvmArgs(jvmArgs);
-      addCompilerPluginOptions(jcmd);
-
-      // copy the classpathElements to not modify the global project definition see
-      // https://github.com/davidB/maven-scala-plugin/issues/60
-      Set<File> paths = new TreeSet<>();
-      for (String s : project.getCompileClasspathElements()) {
-        paths.add(new File(s));
-      }
-      paths.remove(
-          new File(
-              project
-                  .getBuild()
-                  .getOutputDirectory())); // remove output to avoid "error for" : error: XXX is
-      // already defined as package XXX ... object XXX {
-      addAdditionalDependencies(paths);
-      if (sc.version().major == 3) {
-        addScalaDocToClasspath(paths);
-      }
-
-      tracer.out().printfIndentln("classpath = %s", paths);
-
-      if (!paths.isEmpty()) {
-        jcmd.addOption("-classpath", FileUtils.toMultiPath(paths));
-      }
-      // jcmd.addOption("-sourcepath", sourceDir.getAbsolutePath());
-
-      jcmd.addArgs("-doc-format:html");
-      jcmd.addOption("-doc-title", doctitle);
-      return jcmd;
-    } finally {
-      tracer.wayout();
+    // This ensures we have a valid scala version...
+    checkScalaVersion();
+    Context sc = findScalaContext();
+    String apidocMainClassName = sc.apidocMainClassName(scaladocClassName);
+    JavaMainCaller jcmd;
+    if (sc.version().major < 3) {
+      jcmd = getEmptyScalaCommand(apidocMainClassName);
+    } else {
+      String targetClassesDir = project.getModel().getBuild().getOutputDirectory();
+      jcmd = new ScalaDoc3Caller(this, apidocMainClassName, targetClassesDir);
     }
+    jcmd.addArgs(args);
+    jcmd.addJvmArgs(jvmArgs);
+    addCompilerPluginOptions(jcmd);
+
+    // copy the classpathElements to not modify the global project definition see
+    // https://github.com/davidB/maven-scala-plugin/issues/60
+    Set<File> paths = new TreeSet<>();
+    for (String s : project.getCompileClasspathElements()) {
+      paths.add(new File(s));
+    }
+    paths.remove(
+        new File(
+            project
+                .getBuild()
+                .getOutputDirectory())); // remove output to avoid "error for" : error: XXX is
+    // already defined as package XXX ... object XXX {
+    addAdditionalDependencies(paths);
+    if (sc.version().major == 3) {
+      addScalaDocToClasspath(paths);
+    }
+
+    if (!paths.isEmpty()) {
+      jcmd.addOption("-classpath", FileUtils.toMultiPath(paths));
+    }
+    // jcmd.addOption("-sourcepath", sourceDir.getAbsolutePath());
+
+    jcmd.addArgs("-doc-format:html");
+    jcmd.addOption("-doc-title", doctitle);
+    return jcmd;
   }
 
   @Override
   public void generate(Sink sink, Locale locale) throws MavenReportException {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry("void", this, "void generate(Sink sink, Locale locale)");
     try {
-      try {
-        if (!canGenerateReport()) {
-          getLog().info("No source files found");
-          return;
-        }
-
-        File reportOutputDir = getReportOutputDirectory();
-        if (!reportOutputDir.exists()) {
-          reportOutputDir.mkdirs();
-        }
-
-        List<File> sources = findSourceFiles();
-
-        tracer.out().printfIndentln("reportOutputDir = %s", reportOutputDir.getCanonicalPath());
-        tracer
-            .out()
-            .printfIndentln(
-                "sources = %s",
-                sources.stream()
-                    .map(source -> source.getAbsolutePath())
-                    .collect(Collectors.toList()));
-
-        if (sources.size() > 0) {
-          JavaMainCaller jcmd = getScalaCommand();
-          tracer.out().printfIndentln("jcmd.getClass().getName() = %s", jcmd.getClass().getName());
-          tracer.out().flush();
-          jcmd.addOption("-d", reportOutputDir.getAbsolutePath());
-          if (this.scalaContext.version().major < 3) {
-            for (File x : sources) {
-              jcmd.addArgs(FileUtils.pathOf(x, useCanonicalPath));
-            }
-          }
-          jcmd.run(displayCmd);
-        }
-      } catch (MavenReportException | RuntimeException exc) {
-        throw exc;
-      } catch (Exception exc) {
-        throw new MavenReportException("wrap: " + exc.getMessage(), exc);
+      if (!canGenerateReport()) {
+        getLog().info("No source files found");
+        return;
       }
-    } finally {
-      tracer.wayout();
+
+      File reportOutputDir = getReportOutputDirectory();
+      if (!reportOutputDir.exists()) {
+        reportOutputDir.mkdirs();
+      }
+
+      List<File> sources = findSourceFiles();
+
+      if (sources.size() > 0) {
+        JavaMainCaller jcmd = getScalaCommand();
+        jcmd.addOption("-d", reportOutputDir.getAbsolutePath());
+        if (this.scalaContext.version().major < 3) {
+          for (File x : sources) {
+            jcmd.addArgs(FileUtils.pathOf(x, useCanonicalPath));
+          }
+        }
+        jcmd.run(displayCmd);
+      }
+    } catch (MavenReportException | RuntimeException exc) {
+      throw exc;
+    } catch (Exception exc) {
+      throw new MavenReportException("wrap: " + exc.getMessage(), exc);
     }
   }
 }

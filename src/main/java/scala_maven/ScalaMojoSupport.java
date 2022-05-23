@@ -4,8 +4,6 @@
  */
 package scala_maven;
 
-import de.christofreichardt.diagnosis.AbstractTracer;
-import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -224,48 +222,39 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
   protected Context scalaContext;
 
   public Context findScalaContext() throws Exception {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry("Context", this, "findScalaContext()");
-    try {
-      // reuse/lazy scalaContext creation (doesn't need to be Thread safe, scalaContext should be
-      // stateless)
-      if (scalaContext == null) {
-        VersionNumber scalaVersion = findScalaVersion();
+    // reuse/lazy scalaContext creation (doesn't need to be Thread safe, scalaContext should be
+    // stateless)
+    if (scalaContext == null) {
+      VersionNumber scalaVersion = findScalaVersion();
 
-        ArtifactIds aids =
-            scalaVersion.major == 3
-                ? new ArtifactIds4Scala3(scalaVersion)
-                : new ArtifactIds4Scala2();
-        VersionNumber requiredScalaVersion =
-            StringUtils.isNotEmpty(scalaCompatVersion)
-                ? new VersionNumberMask(scalaCompatVersion)
-                : scalaVersion;
-        if (requiredScalaVersion.compareTo(scalaVersion) != 0) {
-          String msg =
-              String.format(
-                  "Scala library detected %s doesn't match scala.compat.version : %s",
-                  scalaVersion, requiredScalaVersion);
-          if (failOnMultipleScalaVersions) {
-            getLog().error(msg);
-            throw new MojoFailureException(msg);
-          }
-          getLog().warn(msg);
+      ArtifactIds aids =
+          scalaVersion.major == 3 ? new ArtifactIds4Scala3(scalaVersion) : new ArtifactIds4Scala2();
+      VersionNumber requiredScalaVersion =
+          StringUtils.isNotEmpty(scalaCompatVersion)
+              ? new VersionNumberMask(scalaCompatVersion)
+              : scalaVersion;
+      if (requiredScalaVersion.compareTo(scalaVersion) != 0) {
+        String msg =
+            String.format(
+                "Scala library detected %s doesn't match scala.compat.version : %s",
+                scalaVersion, requiredScalaVersion);
+        if (failOnMultipleScalaVersions) {
+          getLog().error(msg);
+          throw new MojoFailureException(msg);
         }
-        scalaContext =
-            StringUtils.isNotEmpty(scalaHome)
-                ? new Context4ScalaHome(
-                    scalaVersion, requiredScalaVersion, aids, new File(scalaHome))
-                : new Context4ScalaRemote(
-                    scalaVersion,
-                    requiredScalaVersion,
-                    aids,
-                    scalaOrganization,
-                    findMavenArtifactResolver());
+        getLog().warn(msg);
       }
-      return scalaContext;
-    } finally {
-      tracer.wayout();
+      scalaContext =
+          StringUtils.isNotEmpty(scalaHome)
+              ? new Context4ScalaHome(scalaVersion, requiredScalaVersion, aids, new File(scalaHome))
+              : new Context4ScalaRemote(
+                  scalaVersion,
+                  requiredScalaVersion,
+                  aids,
+                  scalaOrganization,
+                  findMavenArtifactResolver());
     }
+    return scalaContext;
   }
 
   protected void addToClasspath(
@@ -288,66 +277,28 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
   }
 
   void addCompilerToClasspath(Set<File> classpath) throws Exception {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry("void", this, "addCompilerToClasspath(Set<File> classpath)");
-    try {
-      Context sc = findScalaContext();
-      for (Artifact dep : sc.findCompilerAndDependencies()) {
-        classpath.add(dep.getFile());
-        tracer
-            .out()
-            .printfIndentln(
-                "dep.getGroupId() = %s, dep.getArtifactId() = %s, dep.getVersion() = %s",
-                dep.getGroupId(), dep.getArtifactId(), dep.getVersion());
-      }
-    } finally {
-      tracer.wayout();
+    Context sc = findScalaContext();
+    for (Artifact dep : sc.findCompilerAndDependencies()) {
+      classpath.add(dep.getFile());
     }
   }
 
   void addLibraryToClasspath(Set<File> classpath) throws Exception {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry("void", this, "addLibraryToClasspath(Set<File> classpath)");
-    try {
-      Context sc = findScalaContext();
-      tracer.out().printfIndentln("sc.version() = %s", sc.version());
-      for (Artifact dep : sc.findLibraryAndDependencies()) {
-        tracer
-            .out()
-            .printfIndentln(
-                "dep.getGroupId() = %s, dep.getArtifactId() = %s, dep.getVersion() = %s",
-                dep.getGroupId(), dep.getArtifactId(), dep.getVersion());
-        classpath.add(dep.getFile());
-      }
-    } finally {
-      tracer.wayout();
+    Context sc = findScalaContext();
+    for (Artifact dep : sc.findLibraryAndDependencies()) {
+      classpath.add(dep.getFile());
     }
   }
 
   void addScalaDocToClasspath(Set<File> classpath) throws Exception {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry("void", this, "addScalaDocToClasspath(Set<File> classpath)");
-    try {
-      Context sc = findScalaContext();
-      tracer.out().printfIndentln("sc.version() = %s", sc.version());
-      for (Artifact dep : sc.findScalaDocAndDependencies()) {
-        tracer
-            .out()
-            .printfIndentln(
-                "dep.getGroupId() = %s, dep.getArtifactId() = %s, dep.getVersion() = %s",
-                dep.getGroupId(), dep.getArtifactId(), dep.getVersion());
-        classpath.add(dep.getFile());
-      }
-    } finally {
-      tracer.wayout();
+    Context sc = findScalaContext();
+    for (Artifact dep : sc.findScalaDocAndDependencies()) {
+      classpath.add(dep.getFile());
     }
   }
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    System.out.printf(
-        "%s: execute[%s]: %s\n",
-        Thread.currentThread().getName(), System.getProperty("user.dir"), getClass().getName());
     try {
       String oldWay = System.getProperty("maven.scala.version");
       if (oldWay != null) {
@@ -584,56 +535,42 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
    */
   private JavaMainCaller getEmptyScalaCommand(final String mainClass, final boolean forkOverride)
       throws Exception {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry(
-        "JavaMainCaller",
-        this,
-        "getEmptyScalaCommand(final String mainClass, final boolean forkOverride)");
-    try {
-      tracer.out().printfIndentln("scaladocClassName = %s", mainClass);
-      tracer.out().printfIndentln("forkOverride = %b", forkOverride);
-
-      // If we are deviating from the plugin settings, let the user know
-      // what's going on.
-      if (forkOverride != fork) {
-        super.getLog().info("Fork behavior overridden");
-        super.getLog()
-            .info(String.format("Fork for this execution is %s.", String.valueOf(forkOverride)));
-      }
-
-      // TODO - Fork or not depending on configuration?
-      JavaMainCaller cmd;
-      String toolcp = getToolClasspath();
-      tracer.out().printfIndentln("toolcp = %s", toolcp);
-      if (forkOverride) {
-        // HACK (better may need refactor)
-        boolean bootcp = true;
-        if (args != null) {
-          for (String arg : args) {
-            bootcp = bootcp && !"-nobootcp".equals(arg);
-          }
-        }
-        String cp = bootcp ? "" : toolcp;
-        bootcp =
-            bootcp
-                && !(StringUtils.isNotEmpty(addScalacArgs) && addScalacArgs.contains("-nobootcp"));
-        // scalac with args in files
-        // * works only since 2.8.0
-        // * is buggy (don't manage space in path on windows)
-        getLog().debug("use java command with args in file forced : " + forceUseArgFile);
-        cmd =
-            new JavaMainCallerByFork(
-                this, mainClass, cp, null, null, forceUseArgFile, getToolchain());
-        if (bootcp) {
-          cmd.addJvmArgs("-Xbootclasspath/a:" + toolcp);
-        }
-      } else {
-        cmd = new JavaMainCallerInProcess(this, mainClass, toolcp, null, null);
-      }
-      return cmd;
-    } finally {
-      tracer.wayout();
+    // If we are deviating from the plugin settings, let the user know
+    // what's going on.
+    if (forkOverride != fork) {
+      super.getLog().info("Fork behavior overridden");
+      super.getLog()
+          .info(String.format("Fork for this execution is %s.", String.valueOf(forkOverride)));
     }
+
+    // TODO - Fork or not depending on configuration?
+    JavaMainCaller cmd;
+    String toolcp = getToolClasspath();
+    if (forkOverride) {
+      // HACK (better may need refactor)
+      boolean bootcp = true;
+      if (args != null) {
+        for (String arg : args) {
+          bootcp = bootcp && !"-nobootcp".equals(arg);
+        }
+      }
+      String cp = bootcp ? "" : toolcp;
+      bootcp =
+          bootcp && !(StringUtils.isNotEmpty(addScalacArgs) && addScalacArgs.contains("-nobootcp"));
+      // scalac with args in files
+      // * works only since 2.8.0
+      // * is buggy (don't manage space in path on windows)
+      getLog().debug("use java command with args in file forced : " + forceUseArgFile);
+      cmd =
+          new JavaMainCallerByFork(
+              this, mainClass, cp, null, null, forceUseArgFile, getToolchain());
+      if (bootcp) {
+        cmd.addJvmArgs("-Xbootclasspath/a:" + toolcp);
+      }
+    } else {
+      cmd = new JavaMainCallerInProcess(this, mainClass, toolcp, null, null);
+    }
+    return cmd;
   }
 
   protected Toolchain getToolchain() {
@@ -641,24 +578,17 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
   }
 
   private String getToolClasspath() throws Exception {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry("String", this, "getToolClasspath()");
-    try {
-      Set<File> classpath = new TreeSet<>();
-      addLibraryToClasspath(classpath);
-      addCompilerToClasspath(classpath);
-      addScalaDocToClasspath(classpath);
-      if (dependencies != null) {
-        for (BasicArtifact artifact : dependencies) {
-          addToClasspath(
-              artifact.groupId, artifact.artifactId, artifact.version, "", classpath, true);
-        }
+    Set<File> classpath = new TreeSet<>();
+    addLibraryToClasspath(classpath);
+    addCompilerToClasspath(classpath);
+    addScalaDocToClasspath(classpath);
+    if (dependencies != null) {
+      for (BasicArtifact artifact : dependencies) {
+        addToClasspath(
+            artifact.groupId, artifact.artifactId, artifact.version, "", classpath, true);
       }
-      tracer.out().printfIndentln("classpath = %s", classpath);
-      return FileUtils.toMultiPath(classpath);
-    } finally {
-      tracer.wayout();
     }
+    return FileUtils.toMultiPath(classpath);
   }
 
   static String targetOption(String target, VersionNumber scalaVersion) {
@@ -760,16 +690,9 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
    * @throws Exception
    */
   protected void addCompilerPluginOptions(JavaMainCaller scalac) throws Exception {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry("void", this, "addCompilerPluginOptions(JavaMainCaller scalac)");
-    try {
-      List<String> compilerPluginOptions = getCompilerPluginOptions();
-      tracer.out().printfIndentln("compilerPluginOptions = %s", compilerPluginOptions);
-      for (String option : compilerPluginOptions) {
-        scalac.addArgs(option);
-      }
-    } finally {
-      tracer.wayout();
+    List<String> compilerPluginOptions = getCompilerPluginOptions();
+    for (String option : compilerPluginOptions) {
+      scalac.addArgs(option);
     }
   }
 

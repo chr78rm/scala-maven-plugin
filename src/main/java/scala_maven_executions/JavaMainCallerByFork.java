@@ -4,8 +4,6 @@
  */
 package scala_maven_executions;
 
-import de.christofreichardt.diagnosis.AbstractTracer;
-import de.christofreichardt.diagnosis.TracerFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,73 +56,62 @@ public class JavaMainCallerByFork extends JavaMainCallerSupport {
 
   @Override
   public boolean run(boolean displayCmd, boolean throwFailure) throws Exception {
-    AbstractTracer tracer = TracerFactory.getInstance().getCurrentPoolTracer();
-    tracer.entry("boolean", this, "run(boolean displayCmd, boolean throwFailure)");
-    try {
-      tracer.out().printfIndentln("_redirectToLog = %b", _redirectToLog);
-      tracer.out().printfIndentln("this.mainClassName = %s", this.mainClassName);
-      tracer.out().printfIndentln("this.jvmArgs = %s", this.jvmArgs);
-      tracer.out().printfIndentln("this.args = %s", this.args);
-      List<String> cmd = buildCommand();
-      tracer.out().printfIndentln("cmd = %s", cmd);
-      displayCmd(displayCmd, cmd);
-      Executor exec = new DefaultExecutor();
+    List<String> cmd = buildCommand();
+    displayCmd(displayCmd, cmd);
+    Executor exec = new DefaultExecutor();
 
-      // err and out are redirected to out
-      if (!_redirectToLog) {
-        exec.setStreamHandler(new PumpStreamHandler(System.out, System.err, System.in));
-      } else {
-        exec.setStreamHandler(
-            new PumpStreamHandler(
-                new LogOutputStream() {
-                  private LevelState _previous = new LevelState();
+    // err and out are redirected to out
+    if (!_redirectToLog) {
+      exec.setStreamHandler(new PumpStreamHandler(System.out, System.err, System.in));
+    } else {
+      exec.setStreamHandler(
+          new PumpStreamHandler(
+              new LogOutputStream() {
+                private LevelState _previous = new LevelState();
 
-                  @Override
-                  protected void processLine(String line, int level) {
-                    try {
-                      _previous = LogProcessorUtils.levelStateOf(line, _previous);
-                      switch (_previous.level) {
-                        case ERROR:
-                          requester.getLog().error(line);
-                          break;
-                        case WARNING:
-                          requester.getLog().warn(line);
-                          break;
-                        default:
-                          requester.getLog().info(line);
-                          break;
-                      }
-                    } catch (Exception e) {
-                      e.printStackTrace();
+                @Override
+                protected void processLine(String line, int level) {
+                  try {
+                    _previous = LogProcessorUtils.levelStateOf(line, _previous);
+                    switch (_previous.level) {
+                      case ERROR:
+                        requester.getLog().error(line);
+                        break;
+                      case WARNING:
+                        requester.getLog().warn(line);
+                        break;
+                      default:
+                        requester.getLog().info(line);
+                        break;
                     }
+                  } catch (Exception e) {
+                    e.printStackTrace();
                   }
-                }));
-      }
+                }
+              }));
+    }
 
-      CommandLine cl = new CommandLine(cmd.get(0));
-      for (int i = 1; i < cmd.size(); i++) {
-        cl.addArgument(cmd.get(i), false);
-      }
-      try {
-        int exitValue = exec.execute(cl);
-        if (exitValue != 0) {
-          if (throwFailure) {
-            throw new MojoFailureException("command line returned non-zero value:" + exitValue);
-          }
-          return false;
-        }
-        if (!displayCmd) {
-          tryDeleteArgFile(cmd);
-        }
-        return true;
-      } catch (ExecuteException exc) {
+    CommandLine cl = new CommandLine(cmd.get(0));
+    for (int i = 1; i < cmd.size(); i++) {
+      cl.addArgument(cmd.get(i), false);
+    }
+    try {
+      int exitValue = exec.execute(cl);
+      if (exitValue != 0) {
         if (throwFailure) {
-          throw exc;
+          throw new MojoFailureException("command line returned non-zero value:" + exitValue);
         }
         return false;
       }
-    } finally {
-      tracer.wayout();
+      if (!displayCmd) {
+        tryDeleteArgFile(cmd);
+      }
+      return true;
+    } catch (ExecuteException exc) {
+      if (throwFailure) {
+        throw exc;
+      }
+      return false;
     }
   }
 
