@@ -39,11 +39,8 @@ public class Context4ScalaRemote extends ContextBase implements Context {
 
   @Override
   public Set<Artifact> findCompilerAndDependencies() throws Exception {
-    Set<Artifact> compilerAndDependencies =
-        mavenArtifactResolver.getJarAndDependencies(
+    return mavenArtifactResolver.getJarAndDependencies(
             scalaOrganization, aids.scalaCompilerArtifactId(), scalaVersion.toString(), null);
-
-    return compilerAndDependencies;
   }
 
   @Override

@@ -139,20 +139,10 @@ public class MainHelper {
 
   /** Runs the main method of a java class */
   static void runMain(String mainClassName, List<String> args, ClassLoader cl) throws Exception {
-    System.out.printf(
-        "%s %s %s\n",
-        "void",
-        MainHelper.class,
-        "runMain(String mainClassName, List<String> args, ClassLoader cl)");
-    System.out.printf("mainClassName = %s\n", mainClassName);
-    System.out.printf("args = %s\n", args);
-    System.out.printf("cl = %s\n", cl);
     if (cl == null) {
       cl = Thread.currentThread().getContextClassLoader();
-      System.out.printf("cl.getParent() = %s\n", cl.getParent());
     }
     Class<?> mainClass = cl.loadClass(mainClassName);
-    System.out.printf("mainClass.getClassLoader() = %s\n", mainClass.getClassLoader());
     Method mainMethod = mainClass.getMethod("main", String[].class);
     int mods = mainMethod.getModifiers();
     if (mainMethod.getReturnType() != void.class

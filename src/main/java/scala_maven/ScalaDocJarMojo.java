@@ -102,7 +102,6 @@ public class ScalaDocJarMojo extends ScalaDocMojo {
     }
     try {
       generate(null, Locale.getDefault());
-
       if (reportOutputDirectory.exists()) {
         final File outputFile =
             generateArchive(reportOutputDirectory, finalName + "-" + getClassifier() + ".jar");

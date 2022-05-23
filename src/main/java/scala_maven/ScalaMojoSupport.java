@@ -479,9 +479,7 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
     }
   }
 
-  /**
-   * @return A filter to only extract artifacts deployed from scala distributions
-   */
+  /** @return A filter to only extract artifacts deployed from scala distributions */
   private DependencyNodeFilter createScalaDistroDependencyFilter() throws Exception {
     List<DependencyNodeFilter> filters = new ArrayList<>();
     filters.add(new ScalaDistroArtifactFilter(findScalaContext()));
@@ -535,6 +533,7 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
    */
   private JavaMainCaller getEmptyScalaCommand(final String mainClass, final boolean forkOverride)
       throws Exception {
+
     // If we are deviating from the plugin settings, let the user know
     // what's going on.
     if (forkOverride != fork) {
@@ -690,8 +689,7 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
    * @throws Exception
    */
   protected void addCompilerPluginOptions(JavaMainCaller scalac) throws Exception {
-    List<String> compilerPluginOptions = getCompilerPluginOptions();
-    for (String option : compilerPluginOptions) {
+    for (String option : getCompilerPluginOptions()) {
       scalac.addArgs(option);
     }
   }

@@ -103,9 +103,7 @@ public class JavaMainCallerByFork extends JavaMainCallerSupport {
         }
         return false;
       }
-      if (!displayCmd) {
-        tryDeleteArgFile(cmd);
-      }
+      if (!displayCmd) tryDeleteArgFile(cmd);
       return true;
     } catch (ExecuteException exc) {
       if (throwFailure) {

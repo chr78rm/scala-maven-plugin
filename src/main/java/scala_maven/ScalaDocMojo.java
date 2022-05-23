@@ -207,7 +207,6 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
       }
 
       List<File> sources = findSourceFiles();
-
       if (sources.size() > 0) {
         JavaMainCaller jcmd = getScalaCommand();
         jcmd.addOption("-d", reportOutputDir.getAbsolutePath());
