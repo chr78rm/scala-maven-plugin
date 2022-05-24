@@ -580,7 +580,6 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
     Set<File> classpath = new TreeSet<>();
     addLibraryToClasspath(classpath);
     addCompilerToClasspath(classpath);
-    addScalaDocToClasspath(classpath);
     if (dependencies != null) {
       for (BasicArtifact artifact : dependencies) {
         addToClasspath(
