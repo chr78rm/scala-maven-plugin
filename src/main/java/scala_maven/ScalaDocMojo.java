@@ -17,7 +17,6 @@ import org.codehaus.doxia.sink.Sink;
 import org.codehaus.plexus.util.StringUtils;
 import scala_maven_dependency.Context;
 import scala_maven_executions.JavaMainCaller;
-import scala_maven_executions.ScalaDoc3Caller;
 import util.FileUtils;
 
 /** Produces Scala API documentation. */
@@ -156,12 +155,12 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
     Context sc = findScalaContext();
     String apidocMainClassName = sc.apidocMainClassName(scaladocClassName);
     JavaMainCaller jcmd;
-    if (sc.version().major < 3) {
-      jcmd = getEmptyScalaCommand(apidocMainClassName);
-    } else {
-      String targetClassesDir = project.getModel().getBuild().getOutputDirectory();
-      jcmd = new ScalaDoc3Caller(this, apidocMainClassName, targetClassesDir);
-    }
+    //    if (sc.version().major < 3) {
+    jcmd = getEmptyScalaCommand(apidocMainClassName);
+    //    } else {
+    //      String targetClassesDir = project.getModel().getBuild().getOutputDirectory();
+    //      jcmd = new ScalaDoc3Caller(this, apidocMainClassName, targetClassesDir);
+    //    }
     jcmd.addArgs(args);
     jcmd.addJvmArgs(jvmArgs);
     addCompilerPluginOptions(jcmd);
@@ -214,6 +213,10 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
           for (File x : sources) {
             jcmd.addArgs(FileUtils.pathOf(x, useCanonicalPath));
           }
+        } else {
+          jcmd.addArgs(
+              new File("." + File.separator + "target" + File.separator + "classes")
+                  .getAbsolutePath());
         }
         jcmd.run(displayCmd);
       }
