@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.alchim31.maven</groupId>
   <artifactId>scala-maven-plugin</artifactId>
-  <version>4.6.2-EXPERIMENTAL</version>
+  <version>4.6.3-EXPERIMENTAL</version>
   <packaging>maven-plugin</packaging>
 
   <name>scala-maven-plugin</name>
@@ -144,7 +144,7 @@
     <dependency>
       <groupId>org.apache.maven.shared</groupId>
       <artifactId>maven-dependency-tree</artifactId>
-      <version>3.1.0</version>
+      <version>3.1.1</version>
     </dependency>
     <dependency>
       <groupId>org.apache.maven.reporting</groupId>
@@ -164,7 +164,7 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
-      <version>3.4.1</version>
+      <version>3.4.2</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
@@ -544,13 +544,13 @@
           <dependency>
             <groupId>org.apache.maven.scm</groupId>
             <artifactId>maven-scm-api</artifactId>
-            <version>1.12.2</version>
+            <version>1.13.0</version>
             <scope>compile</scope>
           </dependency>
           <dependency>
             <groupId>org.apache.maven.scm</groupId>
             <artifactId>maven-scm-provider-gitexe</artifactId>
-            <version>1.12.2</version>
+            <version>1.13.0</version>
             <scope>compile</scope>
           </dependency>
         </dependencies>
@@ -672,7 +672,7 @@
         <plugins>
           <plugin>
             <artifactId>maven-invoker-plugin</artifactId>
-            <version>3.2.2</version>
+            <version>3.3.0</version>
             <executions>
               <execution>
                 <phase>integration-test</phase>
