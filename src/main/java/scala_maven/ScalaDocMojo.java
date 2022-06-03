@@ -178,9 +178,9 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
                 .getOutputDirectory())); // remove output to avoid "error for" : error: XXX is
     // already defined as package XXX ... object XXX {
     addAdditionalDependencies(paths);
-    if (sc.version().major == 3) {
-      addScalaDocToClasspath(paths);
-    }
+    //    if (sc.version().major == 3) {
+    //      addScalaDocToClasspath(paths);
+    //    }
 
     if (!paths.isEmpty()) {
       jcmd.addOption("-classpath", FileUtils.toMultiPath(paths));
