@@ -96,31 +96,6 @@
                   </args>
                 </configuration>
               </execution>
-              <execution>
-                <!-- use mvn scala:doc@Scaladoc to generate the documentation -->
-                <id>Scaladoc</id>
-                <goals>
-                  <goal>doc</goal>
-                </goals>
-                <configuration>
-                  <reportOutputDirectory>scaladocs</reportOutputDirectory>
-                  <fork>true</fork>
-                  <forceUseArgFile>false</forceUseArgFile>
-                  <jvmArgs>
-                    <jvmArg>-Xms64m</jvmArg>
-                    <jvmArg>-Xmx1024m</jvmArg>
-                  </jvmArgs>
-                  <args>
-                    <arg>-doc-footer</arg>
-                    <arg>Copyright (c) 2017-2022, Christof Reichardt - Paul-Ehrlich-Weg 1 - D-63110 Rodgau</arg>
-                    <arg>-doc-title</arg>
-                    <arg>scaladoc-jar-test</arg>
-                    <arg>-doc-version</arg>
-                    <arg>${project.version}</arg>
-                    <arg>-author</arg>
-                  </args>
-                </configuration>
-              </execution>
             </executions>
           </plugin>
         </plugins>
