@@ -116,7 +116,9 @@ public class SbtIncrementalCompiler {
 
           @Override
           public DefinesClass definesClass(VirtualFile classpathEntry) {
-            return Locate.definesClass(classpathEntry);
+            return classpathEntry.name().equals("rt.jar")
+                ? className -> false
+                : Locate.definesClass(classpathEntry);
           }
         };
 
