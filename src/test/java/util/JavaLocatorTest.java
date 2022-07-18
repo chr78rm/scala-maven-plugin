@@ -18,8 +18,7 @@ public class JavaLocatorTest {
   @Rule public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
 
   @Test
-  public void shouldReturnNotNullWhenJavaIsNotAvailableOnCommandLineAndJavaHomeIsPresent()
-      throws IOException {
+  public void shouldReturnNotNullWhenJavaIsNotAvailableOnCommandLineAndJavaHomeIsPresent() throws IOException {
     Toolchain toolchain = new ReturningToolChain(null);
     assertNotNull(JavaLocator.findExecutableFromToolchain(toolchain));
   }
@@ -46,8 +45,7 @@ public class JavaLocatorTest {
 
   @Test
   public void shouldReturnParentOfChildOfJavaHomeFolder() throws IOException {
-    File home =
-        JavaLocator.findHomeFromToolchain(new ReturningToolChain("parent/child/my-path-to-java"));
+    File home = JavaLocator.findHomeFromToolchain(new ReturningToolChain("parent/child/my-path-to-java"));
     assertEquals("parent", home.getPath());
   }
 
