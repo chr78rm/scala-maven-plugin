@@ -17,6 +17,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.toolchain.Toolchain;
+import util.JavaLocator;
 
 /**
  * @author Chr. Reichardt
@@ -34,11 +36,20 @@ public class ScalaDoc3Caller implements JavaMainCaller {
           .toString();
   final List<String> args = new ArrayList<>();
   final String targetClassesDir;
+  final Toolchain toolchain;
 
   public ScalaDoc3Caller(AbstractMojo mojo, String apidocMainClassName, String targetClassesDir) {
     this.requester = mojo;
     this.apidocMainClassName = apidocMainClassName;
     this.targetClassesDir = targetClassesDir;
+    this.toolchain = null;
+  }
+
+  public ScalaDoc3Caller(AbstractMojo mojo, String apidocMainClassName, String targetClassesDir, Toolchain toolchain) {
+    this.requester = mojo;
+    this.apidocMainClassName = apidocMainClassName;
+    this.targetClassesDir = targetClassesDir;
+    this.toolchain = toolchain;
   }
 
   @Override
@@ -99,8 +110,9 @@ public class ScalaDoc3Caller implements JavaMainCaller {
 
   @Override
   public boolean run(boolean displayCmd, boolean throwFailure) throws MojoFailureException {
+    String javaExec = JavaLocator.findExecutableFromToolchain(this.toolchain);
     List<String> commands = new ArrayList<>();
-    commands.add("java");
+    commands.add(javaExec);
     commands.addAll(this.jvmArgs);
     commands.add("-classpath");
     commands.add(this.classPath);

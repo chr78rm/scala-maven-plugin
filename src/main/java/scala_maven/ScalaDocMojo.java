@@ -14,6 +14,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.reporting.MavenReport;
 import org.apache.maven.reporting.MavenReportException;
+import org.apache.maven.toolchain.Toolchain;
 import org.codehaus.doxia.sink.Sink;
 import org.codehaus.plexus.util.StringUtils;
 import scala_maven_dependency.Context;
@@ -168,7 +169,8 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
       jcmd = getEmptyScalaCommand(apidocMainClassName);
     } else {
       String targetClassesDir = project.getModel().getBuild().getOutputDirectory();
-      jcmd = new ScalaDoc3Caller(this, apidocMainClassName, targetClassesDir);
+      Toolchain toolchain = toolchainManager.getToolchainFromBuildContext("jdk", session);
+      jcmd = new ScalaDoc3Caller(this, apidocMainClassName, targetClassesDir, toolchain);
     }
     jcmd.addArgs(args);
     jcmd.addJvmArgs(jvmArgs);
