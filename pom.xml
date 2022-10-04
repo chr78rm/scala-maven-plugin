@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.alchim31.maven</groupId>
   <artifactId>scala-maven-plugin</artifactId>
-  <version>4.7.2-EXPERIMENTAL</version>
+  <version>4.7.3-EXPERIMENTAL</version>
   <packaging>maven-plugin</packaging>
 
   <name>scala-maven-plugin</name>
@@ -181,7 +181,7 @@
     <dependency>
       <groupId>org.scala-sbt</groupId>
       <artifactId>zinc_2.13</artifactId>
-      <version>1.7.1</version>
+      <version>1.7.2</version>
       <exclusions>
         <exclusion>
           <groupId>org.jline</groupId>
@@ -422,7 +422,7 @@
         <plugin>
           <groupId>com.diffplug.spotless</groupId>
           <artifactId>spotless-maven-plugin</artifactId>
-          <version>2.27.0</version>
+          <version>2.27.1</version>
           <configuration>
             <java>
               <includes>
