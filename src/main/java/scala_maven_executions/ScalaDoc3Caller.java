@@ -110,9 +110,9 @@ public class ScalaDoc3Caller implements JavaMainCaller {
 
   @Override
   public boolean run(boolean displayCmd, boolean throwFailure) throws MojoFailureException {
-    String javaExec = JavaLocator.findExecutableFromToolchain(this.toolchain);
+//    String javaExec = JavaLocator.findExecutableFromToolchain(this.toolchain);
     List<String> commands = new ArrayList<>();
-    commands.add(javaExec);
+    commands.add("java");
     commands.addAll(this.jvmArgs);
     commands.add("-classpath");
     commands.add(this.classPath);
