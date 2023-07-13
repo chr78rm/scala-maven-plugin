@@ -170,7 +170,7 @@ public class ScalaDocMojo extends ScalaSourceMojoSupport implements MavenReport 
     } else {
       String targetClassesDir = project.getModel().getBuild().getOutputDirectory();
       Toolchain toolchain = toolchainManager.getToolchainFromBuildContext("jdk", session);
-      jcmd = new ScalaDoc3Caller(this, apidocMainClassName, targetClassesDir, toolchain);
+      jcmd = new ScalaDoc3Caller(this, apidocMainClassName, targetClassesDir, toolchain, getReportOutputDirectory());
     }
     jcmd.addArgs(args);
     jcmd.addJvmArgs(jvmArgs);

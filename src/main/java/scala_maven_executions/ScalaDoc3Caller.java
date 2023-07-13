@@ -52,6 +52,14 @@ public class ScalaDoc3Caller implements JavaMainCaller {
     this.toolchain = toolchain;
   }
 
+  public ScalaDoc3Caller(AbstractMojo mojo, String apidocMainClassName, String targetClassesDir, Toolchain toolchain, File reportOutputDirectory) {
+    this.requester = mojo;
+    this.apidocMainClassName = apidocMainClassName;
+    this.targetClassesDir = targetClassesDir;
+    this.toolchain = toolchain;
+    this.outputPath = reportOutputDirectory.getPath();
+  }
+
   @Override
   public void addJvmArgs(String... jvmArgs) {
     if (Objects.nonNull(jvmArgs)) {
@@ -110,9 +118,9 @@ public class ScalaDoc3Caller implements JavaMainCaller {
 
   @Override
   public boolean run(boolean displayCmd, boolean throwFailure) throws MojoFailureException {
-//    String javaExec = JavaLocator.findExecutableFromToolchain(this.toolchain);
+    File javaExec = JavaLocator.findExecutableFromToolchain(this.toolchain);
     List<String> commands = new ArrayList<>();
-    commands.add("java");
+    commands.add(javaExec.getPath());
     commands.addAll(this.jvmArgs);
     commands.add("-classpath");
     commands.add(this.classPath);
