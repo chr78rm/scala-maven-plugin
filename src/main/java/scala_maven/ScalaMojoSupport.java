@@ -588,9 +588,7 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
     return FileUtils.toMultiPath(classpath);
   }
 
-  static String targetOption(String target, VersionNumber scalaVersion) {
-    if (scalaVersion.major == 2) {
-      if (scalaVersion.minor <= 12) {
+  private static String computeTargetOption(String target) {
         if (target.equals("1.5") || target.equals("5")) {
           return "jvm-1.5";
         } else if (target.equals("1.6") || target.equals("6")) {
@@ -599,11 +597,12 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
           return "jvm-1.7";
         } else if (target.equals("1.8") || target.equals("8")) {
           return "jvm-1.8";
-        } else {
-          // invalid or unsupported option, just ignore
+    }
           return null;
         }
-      } else if (target.equals("1.5")) {
+
+  private static String computeReleaseOptionFromTarget(String target) {
+    if (target.equals("1.5")) {
         return "5";
       } else if (target.equals("1.6")) {
         return "6";
@@ -612,8 +611,38 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
       } else if (target.equals("1.8")) {
         return "8";
       }
-    }
     return target;
+  }
+
+  // visible for tests
+  static List<String> computeBytecodeVersionOptions(
+      String target, String release, VersionNumber scalaVersion) {
+    List<String> options = new ArrayList<>();
+    boolean targetIsDefined = StringUtils.isNotEmpty(target);
+    boolean releaseIsDefined = StringUtils.isNotEmpty(release);
+    boolean releaseIsSupported = scalaVersion.compareTo(new VersionNumber("2.12.0")) >= 0;
+    String releaseOrJavaOutputVersionOptionName =
+        scalaVersion.compareTo(new VersionNumber("3.1.2")) >= 0
+            ? "-java-output-version"
+            : "-release";
+
+    if (releaseIsDefined && releaseIsSupported) {
+      // release's default is "maven.compiler.release"'s default, which is null
+      options.add(releaseOrJavaOutputVersionOptionName);
+      options.add(release);
+    } else if (targetIsDefined) {
+    // target's default is "maven.compiler.target"'s default, which is 1.8
+      if (releaseIsSupported) {
+        options.add(releaseOrJavaOutputVersionOptionName);
+        options.add(computeReleaseOptionFromTarget(target));
+      } else {
+        String correctTarget = computeTargetOption(target);
+        if (correctTarget != null) {
+          options.add("-target:" + correctTarget);
+      }
+    }
+    }
+    return options;
   }
 
   protected List<String> getScalacOptions() throws Exception {
@@ -621,37 +650,9 @@ public abstract class ScalaMojoSupport extends AbstractMojo {
     if (args != null) Collections.addAll(options, args);
     if (StringUtils.isNotEmpty(addScalacArgs)) {
       Collections.addAll(options, StringUtils.split(addScalacArgs, "|"));
-    }
+      }
     options.addAll(getCompilerPluginOptions());
-
-    VersionNumber scalaVersion = findScalaVersion();
-
-    boolean targetIsDefined = StringUtils.isNotEmpty(target);
-    boolean releaseIsDefined = StringUtils.isNotEmpty(release);
-    boolean targetIsDeprecated = scalaVersion.compareTo(new VersionNumber("2.13.9")) >= 0;
-    boolean releaseIsSupported = scalaVersion.compareTo(new VersionNumber("2.12.0")) >= 0;
-
-    // target's default is "maven.compiler.target"'s default, which is 1.8
-    if (targetIsDefined) {
-      String targetOption = targetOption(target, scalaVersion);
-      if (targetOption != null) {
-        if (!targetIsDeprecated) {
-        options.add("-target:" + targetOption);
-        } else if (!releaseIsDefined) {
-          // -target is deprecated in favor of -release
-          // no user-defined release specified
-          // set release instead, so we don't get a deprecation warning
-          options.add("-release");
-          options.add(targetOption);
-      }
-    }
-    }
-
-    // release's default is "maven.compiler.release"'s default, which is null
-    if (releaseIsDefined && releaseIsSupported) {
-        options.add("-release");
-        options.add(release);
-      }
+    options.addAll(computeBytecodeVersionOptions(target, release, findScalaVersion()));
 
     return options;
   }
